@@ -133,6 +133,25 @@ class Book extends Database
 
         return !empty($rows) ? $rows :$rows;
     }
+
+
+    public function getDetails($id){
+        
+        $bookDetails = $this->callSql("SELECT * FROM $this->tableName WHERE id=$id","row");
+        $result = [];
+        if(!empty($bookDetails)) {
+            
+            $author_id  = $bookDetails['user_id'];
+            $author = $this->callSql("SELECT fullname FROM user WHERE id=$author_id","value");
+            $result['title'] = !empty($bookDetails['title']) ? $bookDetails['title'] : '';
+            $result['cover_photo'] = !empty($bookDetails['cover_photo']) ? BASEURL.'web/uploads/cover/'.$bookDetails['cover_photo'] : '';
+            $result['author'] = !empty($author) ? $author : '';
+            $result['synopsis']  = !empty($bookDetails['synopsis'])?$bookDetails['synopsis']:'-';
+        }
+
+        return $result;
+
+    }
     
     
 

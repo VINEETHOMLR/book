@@ -61,6 +61,29 @@ class BookController extends Controller
 
     }
 
+    public function actionBookDetails(){
+
+        
+        $input   = $_POST;
+        $userObj = Raise::$userObj;
+        $userId  = $userObj['id'];
+        $book_id    = issetGet($input,'book_id','');
+        if(empty($userId)) {
+            return $this->renderAPIError('Userid cannot be empty','');  
+        }
+        if(empty($book_id)) {
+            return $this->renderAPIError('Please select a book ','');  
+        }
+
+        $bookDetails       = (new Book)->getDetails($book_id);
+        $data = [];
+        $data['bookDetails'] = $bookDetails;
+        return $this->renderAPI($data, 'Book List', 'false', 'S01', 'true', 200);
+
+
+
+    }
+
   
 
 
