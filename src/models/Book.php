@@ -154,6 +154,34 @@ class Book extends Database
         return $result;
 
     }
+
+
+    public function insertBook($params){
+
+        $user_id         = !empty($params['user_id']) ? $params['user_id'] : '';
+        $title           = !empty($params['title']) ? $params['title'] : '';
+        $category_id     = !empty($params['category_id']) ? $params['category_id'] : '';
+        $synopsis        = !empty($params['synopsis']) ? $params['synopsis'] : '';
+        $cover_photo     = !empty($params['cover_photo']) ? $params['cover_photo'] : '';
+        $pdf_file        = !empty($params['pdf_file']) ? $params['pdf_file'] : '';
+        $status          = '1';
+        $created_at      = time();
+        $query = "INSERT INTO $this->tableName (`user_id`,`title`,`category_id`,`status`,`created_at`,`synopsis`,`cover_photo`,`pdf_file`) VALUES(:user_id,:title,:category_id,:status,:created_at,:synopsis,:cover_photo,:pdf_file)";
+        $this->query($query);
+        $this->bind(':user_id', $user_id);
+        $this->bind(':title', $title);
+        $this->bind(':category_id', ($category_id));
+        $this->bind(':synopsis', $synopsis);
+        $this->bind(':cover_photo', $cover_photo);
+        $this->bind(':pdf_file', $pdf_file);
+        $this->bind(':created_at', $created_at);
+        $this->bind(':status', $status);
+        if($this->execute()){
+            return true;
+        }
+        return false;
+
+    }
     
     
 

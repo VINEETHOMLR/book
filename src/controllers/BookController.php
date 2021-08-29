@@ -110,6 +110,95 @@ class BookController extends Controller
 
     }
 
+
+    public function actionUploadBook(){
+
+        $input          = $_POST;
+        $userObj        = Raise::$userObj;
+        $userId         = $userObj['id']; 
+        $title          = issetGet($input,'title','');
+        $category_id    = issetGet($input,'category_id','');
+        $synopsis       = issetGet($input,'synopsis','');
+        
+        if(empty($userId)) {
+
+            return $this->renderAPIError('Userid cannot be empty','');  
+        } 
+        if(empty($title)) {
+
+            return $this->renderAPIError('Title cannot be empty','');  
+        } 
+        if(empty($category_id)) {
+
+            return $this->renderAPIError('Please select category to proceed','');  
+        }
+        if(empty($synopsis)) {
+
+            return $this->renderAPIError('Please enter synopsis to proceed','');  
+        }
+        $cover_image = "";
+        if(empty($_FILES['cover_image'])){
+
+            return $this->renderAPIError('Please upload cover image to proceed','');      
+        }
+        if(!empty($_FILES['cover_image'])) {
+            
+            $path           = 'web/upload/cover/';
+            $file_name      = 'cover_'.$title.$userId.'_'.time();
+            $uploadResponse = $this->uploadImage($_FILES['cover_image'],$path,$file_name); 
+            $response = $uploadResponse['status'];
+            if($response == 'false') {
+                
+                return $this->renderAPIError($uploadResponse['message'],''); 
+            }
+            $cover_image = $uploadResponse['filename']; 
+
+        } 
+        if(empty($_FILES['pdf_file'])){
+
+            return $this->renderAPIError('Please upload pdf file  to proceed','');      
+        }
+        $pdf_file = '';
+        if(!empty($_FILES['pdf_file'])) {
+            
+            $path           = 'web/upload/pdf/';
+            $file_name      = 'book_'.$title.$userId.'_'.time();
+            $uploadResponse = $this->uploadPdf($_FILES['pdf_file'],$path,$file_name); 
+            $response = $uploadResponse['status'];
+            if($response == 'false') {
+                
+                return $this->renderAPIError($uploadResponse['message'],''); 
+            }
+            $pdf_file = $uploadResponse['filename']; 
+
+        }
+
+        $data = [];
+        $data['user_id']     = $userId;
+        $data['title']       = $title;
+        $data['category_id'] = $category_id;
+        $data['synopsis']    = $synopsis;
+        $data['cover_photo'] = $cover_image;
+        $data['pdf_file']    = $pdf_file;
+
+        if((new Book)->insertBook($data)){
+            
+            return $this->renderAPI([], 'Successfully uploaded the book', 'false', 'S01', 'true', 200);
+
+        }else{
+            
+            return $this->renderAPI([], 'Failed to upload the book', 'false', 'E01', 'false', 200);
+        }
+
+        return $this->renderAPI([], 'Something went wrong', 'false', 'E01', 'false', 200);
+
+
+
+        
+
+
+    }
+
     function updateCount($book_id,$userId){
         
         $alreadyClicked = (new ClickCount)->checkAlreadyClicked($book_id,$userId);
@@ -141,6 +230,40 @@ class BookController extends Controller
             
             $status  = 'false';
             $message = 'Only allowed jpg,jpeg,png images';
+            return $response = ['status'=>$status,'message'=>$message];
+        }
+        
+        if(move_uploaded_file($file_tmp,$path.$file_name.'.'.$file_ext))
+        {
+            $status = 'true';
+            $message = '';
+            return $response = ['status'=>$status,'message'=>$message,'filename'=>$file_name.'.'.$file_ext];
+        }
+
+        return $response = ['status'=>$status,'message'=>$message];
+
+
+
+}
+
+
+
+function uploadPdf($file,$path,$file_name){
+  
+
+   
+        $file_tmp =$file['tmp_name'];
+        $file_type=$file['type'];
+        $file_ext=explode('/',$file_type);
+        $file_ext = strtolower($file_ext[1]);
+        $extensions= array("PDF","pdf");
+        $status = 'false';
+        $message = "Something went wrong";
+        $response = [];
+        if(!in_array($file_ext,$extensions)) {
+            
+            $status  = 'false';
+            $message = 'Only allowed pdf file';
             return $response = ['status'=>$status,'message'=>$message];
         }
         
