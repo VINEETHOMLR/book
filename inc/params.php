@@ -2,7 +2,7 @@
 
 return [
     'db' => [
-        'dbname' => 'infinite_app',
+        'dbname' => 'book',
         'host' => 'localhost',
         'user' => 'root',
         'pass' => ''
