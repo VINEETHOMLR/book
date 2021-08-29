@@ -10,7 +10,6 @@ use src\lib\Secure;
 use src\lib\RRedis;
 use src\lib\ValidatorFactory;
 use src\models\User;
-use src\models\Driver_user;
 use src\models\UserTokenList;
 use src\models\UserActivityLog;
 
@@ -27,10 +26,7 @@ class LoginController extends Controller
     }
 
     public function actionTest(){
-        $userObj = Raise::$userObj;
-exit;
-        echo "<pre>";
-        print_r($userObj);
+        echo "hai";
     }
 
     public function actionLogin()
@@ -39,23 +35,24 @@ exit;
         
        // $input      = Router::postAll();
         $input      = $_POST;
-        $vehicle_no  = issetGet($input,'vehicle_no','');
+        $email  = issetGet($input,'email','');
         $password  = issetGet($input,'password','');
 
-        if(empty($vehicle_no)) {
-            return $this->renderAPIError('Vehicle number cannot be empty','E01');  
+        if(empty($email)) {
+            return $this->renderAPIError('Email cannot be empty','');  
         }
 
         if(empty($password)) {
-            return $this->renderAPIError('Password cannot be empty','E02');
+            return $this->renderAPIError('Password cannot be empty','');
         }
 
-        $driver = (new Driver_user)->checkLogin($vehicle_no,$password);
+        $userDetails = (new User)->checkLogin($email,$password);
 
 
 
-        if (empty($driver)) {
-            return $this->renderAPIError('Invalid credentials','E03');
+
+        if (empty($userDetails)) {
+            return $this->renderAPIError('Invalid credentials','');
         } 
 
 
@@ -70,7 +67,8 @@ exit;
 */
 
 
-        $token = $this->generateToken($driver['id']);
+        $token = $this->generateToken($userDetails['id']);
+
 
 
 
@@ -80,20 +78,20 @@ exit;
 
 
 
-        $insert['user_id']          =  $driver['id'];             
-        $insert['token']            =  $token;                   
-        $insert['device_id']        =  $userSystemInfo['device_id'];          
-        $insert['device_model']     =  $userSystemInfo['device_model'];        
-        $insert['device_os']        =  $userSystemInfo['device_os'];          
-        $insert['device_imei']      =  $userSystemInfo['device_imei'];      
+        $insert['user_id']               =  $userDetails['id'];             
+        $insert['token']                 =  $token;                   
+        $insert['device_id']             =  $userSystemInfo['device_id'];          
+        $insert['device_model']          =  $userSystemInfo['device_model'];        
+        $insert['device_os']             =  $userSystemInfo['device_os'];          
+        $insert['device_imei']           =  $userSystemInfo['device_imei'];      
         $insert['device_manufacturer']   =  $userSystemInfo['device_manufacturer'];
         $insert['device_appversion']     =  $userSystemInfo['device_appversion'];
-        $insert['language']         =    $userSystemInfo['language'];         
-        $insert['medium']           =    "1";            
-        $insert['created_at']       =  time();         
-        $insert['created_ip']       =    $userSystemInfo['ip'];       
-        $insert['status']           =  '1';            
-        $insert['last_seen']        =  time();      
+        $insert['language']              =    $userSystemInfo['language'];         
+        $insert['medium']                =    "1";            
+        $insert['created_at']            =  time();         
+        $insert['created_ip']            =    $userSystemInfo['ip'];       
+        $insert['status']                =  '1';            
+        $insert['last_seen']             =  time();      
 
         (new UserTokenList)->assignAttrs($insert)->save();
 
@@ -104,9 +102,9 @@ exit;
         $updateUser['last_login_ip']          =  $userSystemInfo['ip'];        
         $updateUser['last_login_os']          =  $userSystemInfo['device_os'];        
         $updateUser['last_login_device']      =  $userSystemInfo['device_model'];        
-        $updateUser['id']      =  $driver['id'];        
+        $updateUser['id']      =  $userDetails['id'];        
 
-        (new Driver_user)->assignAttrs($updateUser)->update();
+        (new User)->assignAttrs($updateUser)->update();
 
 
 
@@ -114,7 +112,7 @@ exit;
         $ip['module']   = 'Login';
         $ip['action']   = 'login';
         $ip['activity'] = "User login";
-        $ip['user_id']  = $driver['id'];
+        $ip['user_id']  = $userDetails['id'];
         (new UserActivityLog)->saveUserLog($ip);
 
        
@@ -131,11 +129,11 @@ exit;
         $redis->set($redisKey,$player_arr,7200);*/
 
         $data = array(
-                    "id"=> (string)$driver['id'],
-                    "driver_name"=> (string)$driver['driver_name'],
+                    "id"=> (string)$userDetails['id'],
+                    "name"=> (string)$userDetails['fullname'],
                     "status"=> "1",
-                    "last_login_time"=> (string)$driver['last_login_time'],
-                    "last_login_ip"=> (string)$driver['last_login_ip'],
+                    "last_login_time"=> (string)$userDetails['last_login_time'],
+                    "last_login_ip"=> (string)$userDetails['last_login_ip'],
                     "token"=> (string)$redisKey);
         
         return $this->renderAPI($data, 'Successfully logined', 'false', 'S01', 'true', 200);
