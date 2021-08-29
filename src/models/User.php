@@ -546,4 +546,21 @@ class User extends Database
 
     }
 
+
+    public function updateProfile($params){
+
+        $fullname    = $params['name'];
+        $profile_pic = $params['profile_pic'];
+        $about       = $params['about'];
+        $id       = $params['user_id'];
+        $time        = time();
+        $this->query("UPDATE $this->tableName SET fullname = '$fullname',profile_pic='$profile_pic' ,about='$about',updated_at = '$time' where id = '$id'");
+        if($this->execute()){
+            return true;
+        }
+        return false;
+            
+    }
+        
+
 }
