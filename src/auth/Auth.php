@@ -8,7 +8,7 @@ use src\lib\RRedis;
 use src\lib\Database;
 use src\models\UserTokenList;
 use src\models\User;
-use src\models\Driver_user;
+//use src\models\Driver_user;
 
 class Auth
 {
@@ -47,7 +47,7 @@ class Auth
                 return false;
             }
 
-            $userInfo = (new Driver_user)->findByPK($user_id)->convertArray();
+            $userInfo = (new User)->findByPK($user_id)->convertArray();
 
            
 
