@@ -27,7 +27,19 @@ class RegisterController extends Controller
     }
 
     public function actionIndex(){
-        
+
+        $input            = $_POST;
+        $name             = issetGet($input,'name','');
+        $username         = issetGet($input,'username','');
+        $password         = issetGet($input,'password','');
+        $confirmpassword  = issetGet($input,'confirmpassword','');
+
+        if(empty($name)) {
+            return $this->renderAPIError('Name cannot be empty','');  
+        }
+        if(empty($username)) {
+            return $this->renderAPIError('Username cannot be empty','');  
+        }
     }
 
     public function actionGetCategoryList(){
