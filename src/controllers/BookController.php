@@ -61,68 +61,7 @@ class BookController extends Controller
 
     }
 
-    public function actionUpdateProfile(){
-
-
-        $input   = $_POST;
-        $userObj = Raise::$userObj;
-        $userId  = $userObj['id'];
-        $name    = issetGet($input,'name','');
-        $about   = issetGet($input,'about','');
-        if(empty($userId)) {
-            return $this->renderAPIError('Userid cannot be empty','');  
-        }
-        if(empty($name)) {
-            return $this->renderAPIError('Name cannot be empty','');  
-        }
-        
-        $userDetails = $this->usermdl->getUserDetails($userId);
-        $profile_pic = $userDetails['profile_pic'];
-        if(!empty($_FILES['profile_pic'])) {
-            
-            $path           = 'web/upload/profile/';
-            $file_name      = 'profile_'.$userId.'_'.time();
-            $uploadResponse = $this->uploadImage($_FILES['profile_pic'],$path,$file_name); 
-            $response = $uploadResponse['status'];
-            if($response == 'false') {
-                
-                return $this->renderAPIError($uploadResponse['message'],''); 
-            }
-            $profile_pic = $uploadResponse['filename']; 
-
-        }
-
-
-        $params = [];
-        $params['name']        = $name;
-        $params['profile_pic'] = $profile_pic;
-        $params['about']       = $about;
-        $params['user_id']     = $userId;
-
-        if($this->usermdl->updateProfile($params)){
-
-            $userDetails = [];
-            $userDetails = $this->usermdl->getUserDetails($userId);
-
-            $data = [];
-            $data['name']  = !empty($userDetails['fullname']) ? $userDetails['fullname'] : '';
-            $data['about'] = !empty($userDetails['about']) ? $userDetails['about'] : '';
-            $data['profile_pic'] = !empty($userDetails['profile_pic']) ? BASEURL.'web/upload/profile/'.$userDetails['profile_pic'] : '';
-            
-            $data['bookList'] = [];
-            
-            return $this->renderAPI($data, 'Profile Data', 'false', 'S01', 'true', 200);    
-        }else{
-
-            return $this->renderAPIError('Failed to updated profile','');     
-        }
-
-        return $this->renderAPIError('Something went wrong','');  
-
-
-
-
-    }
+  
 
 
 
