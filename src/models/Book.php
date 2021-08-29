@@ -148,7 +148,7 @@ class Book extends Database
             $result['author']      = !empty($author) ? $author : '';
             $result['synopsis']    = !empty($bookDetails['synopsis'])?$bookDetails['synopsis']:'-';
             $result['pdf_file']    = !empty($bookDetails['pdf_file']) ? BASEURL.'web/uploads/pdf/'.$bookDetails['pdf_file'] : '';
-            $result['user_id']       = !empty($bookDetails['user_id']) ? $bookDetails['user_id'] : '';
+            $result['author_id']       = !empty($bookDetails['user_id']) ? $bookDetails['user_id'] : '';
         }
 
         return $result;

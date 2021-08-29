@@ -102,7 +102,7 @@ class BookController extends Controller
         $bookDetails       = (new Book)->getDetails($book_id);
         $data = [];
         $data['bookDetails'] = $bookDetails;
-        if(!empty($bookDetails) && $bookDetails['user_id']!=$userId) {
+        if(!empty($bookDetails) && $bookDetails['author_id']!=$userId) {
             
             $this->updateCount($book_id,$userId);
         }
