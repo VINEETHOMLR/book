@@ -12,6 +12,7 @@ use src\lib\ValidatorFactory;
 use src\models\User;
 use src\models\Book;
 use src\models\Category;
+use src\models\ClickCount;
 
 
 
@@ -101,7 +102,22 @@ class BookController extends Controller
         $bookDetails       = (new Book)->getDetails($book_id);
         $data = [];
         $data['bookDetails'] = $bookDetails;
+        if(!empty($bookDetails) && $bookDetails['user_id']!=$userId) {
+            
+            $this->updateCount($book_id,$userId);
+        }
         return $this->renderAPI($data, 'Book Details', 'false', 'S01', 'true', 200);
+
+    }
+
+    function updateCount($book_id,$userId){
+        
+        $alreadyClicked = (new ClickCount)->checkAlreadyClicked($book_id,$userId);
+        if(empty($alreadyClicked)) {
+            
+            (new ClickCount)->updateCount($book_id,$userId);
+        }
+    
 
     }
 
