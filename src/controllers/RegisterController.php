@@ -9,7 +9,7 @@ use src\lib\Helper;
 use src\lib\Secure;
 use src\lib\RRedis;
 use src\lib\ValidatorFactory;
-use src\models\Category;
+use src\models\User;
 
 
 
@@ -23,13 +23,14 @@ class RegisterController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->categorymdl = (new Category);
+        $this->usermdl = (new User);
     }
 
     public function actionIndex(){
 
         $input            = $_POST;
         $name             = issetGet($input,'name','');
+       // $email             = issetGet($input,'email','');
         $username         = issetGet($input,'username','');
         $password         = issetGet($input,'password','');
         $confirmpassword  = issetGet($input,'confirmpassword','');
@@ -37,9 +38,64 @@ class RegisterController extends Controller
         if(empty($name)) {
             return $this->renderAPIError('Name cannot be empty','');  
         }
+
+        /*if(empty($email)) {
+
+            return $this->renderAPIError('Email cannot be empty','');  
+        }
+        if(!$this->validateEmail($email)){
+
+            return $this->renderAPIError('Please enter a valid email','');      
+        }*/
+
+        
+        /*$userDetails = $this->usermdl->getUserByEmail($email);
+        if(!empty($userDetails)) {
+            
+            return $this->renderAPIError('Email already used','');
+        }*/
         if(empty($username)) {
             return $this->renderAPIError('Username cannot be empty','');  
         }
+        if(!$this->validateEmail($username)){
+
+            return $this->renderAPIError('Username should be a valid email','');      
+        }
+        $userDetails = [];
+        $userDetails = $this->usermdl->getUserByUsername($username);
+        if(!empty($userDetails)) {
+            
+            return $this->renderAPIError('Username already used','');
+        }
+        if(empty($password)) {
+            return $this->renderAPIError('Password cannot be empty','');  
+        }
+        if(empty($confirmpassword)) {
+            return $this->renderAPIError('ConfirmPassword cannot be empty','');  
+        }
+        if($password != $confirmpassword) {
+            
+            return $this->renderAPIError('Password and Confirmpassword should be same','');
+        }
+
+
+        $params  = [];
+        $params['username'] = $username;
+        $params['fullname'] = $name;
+        $params['password'] = md5($password);
+        $params['status']   = 1;
+        //$params['email']    = $email;
+        if($response = $this->usermdl->registerUser($params)){
+            
+            return $this->renderAPI([], 'Successfully registered', 'false', 'S01', 'true', 200);
+
+        }else{
+            
+            return $this->renderAPI([], 'Failed to register the user', 'false', '', 'true', 200);
+        }
+        return $this->renderAPI([], 'Something went wrong', 'false', '', 'true', 200);
+
+
     }
 
     public function actionGetCategoryList(){
@@ -113,6 +169,16 @@ public function is_url($url){
             return true;
         } 
         return false;
+}
+
+public function validateEmail($email){
+    
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return true;
+    } else {
+        return false;
+    }
+    return false;
 }
 
 

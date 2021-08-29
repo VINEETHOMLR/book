@@ -147,6 +147,30 @@ class User extends Database
         return $userId;
     }
 
+    public function getUserByUsername($username){
+        
+
+        $userDetails = $this->callSql("SELECT * FROM $this->tableName WHERE username = '$username' LIMIT 1","value");
+
+        if (empty($userDetails)) {
+            return [];
+        }
+
+        return $userDetails;
+    }
+
+    public function getUserByEmail($email){
+        
+
+        $userDetails = $this->callSql("SELECT * FROM $this->tableName WHERE email = '$email' LIMIT 1","value");
+
+        if (empty($userDetails)) {
+            return [];
+        }
+
+        return $userDetails;
+    }
+
     public function sendVerificationCode($email)
     {
         
@@ -217,113 +241,14 @@ class User extends Database
     {
 
 
-        $email = !empty($params['email']) ? $params['email'] : '';
-        $real_name = !empty($params['real_name']) ? $params['real_name'] : '';
+       // $email    = !empty($params['email']) ? $params['email'] : '';
+        $username     = !empty($params['username']) ? $params['username'] : '';
         $password = !empty($params['password']) ? $params['password'] : '';
-        $passcode = !empty($params['passcode']) ? $params['passcode'] : '';
+        $fullname = !empty($params['fullname']) ? $params['fullname'] : '';
+        $status = !empty($params['status']) ? $params['status'] : '';
         //$verificationCode = !empty($params['verificationCode']) ? $params['verificationCode'] : '';
         $time = time();
-        if(empty($email)) {
-            
-            return ['status' => 'Error', 'message' => Raise::t('register','err_email_required')];
-        }
-        if(empty($real_name)) {
-            
-            return ['status' => 'Error', 'message' => Raise::t('register','err_realname_required')];
-        }
         
-        if(empty($password)) {
-            
-            return ['status' => 'Error', 'message' => Raise::t('register','err_password_required_text')];
-        }
-        if(empty($passcode)) {
-            
-            return ['status' => 'Error', 'message' => Raise::t('register','err_passcode_required_text')];
-        }
-
-        /*if(empty($verificationCode)) {
-            
-            return ['status' => 'Error', 'message' => Raise::t('register','err_verification_code_required_text')];
-        }*/
-        /*if($this->verifyEmail($email,$verificationCode)) {
-
-            $data = [];
-            $result = [];
-            
-
-
-            $query = "INSERT INTO $this->tableName (`username`,`password`,`status`,`created_ip`,`created_at`,`created_by`,`email_verification_status`,`email_verify_time`,`email_verify_ip`) VALUES (:username,:password,:status,:created_ip,:created_at,:created_by,:email_verification_status,:email_verify_time,:email_verify_ip)";
-            $this->query($query);
-            $this->bind(':username', $email);
-            $this->bind(':password', md5($password));
-            $this->bind(':status', '1');
-            $this->bind(':created_ip', getClientIP());
-            $this->bind(':created_at', $time);
-            $this->bind(':created_by', '0');
-            $this->bind(':email_verification_status', '1');
-            $this->bind(':email_verify_time', $time);
-            $this->bind(':email_verify_ip', getClientIP());
-
-            $this->execute();
-            $userId = $this->lastInsertId();
-
-            if(!empty($userId)){
-                
-                $data = [];
-               
-
-
-                $query = "INSERT INTO user_info (`user_id`,`force_update_password`,`kyc_status`,`is_deposit_allowed`,`is_withdrawal_allowed`,`is_swap_allowed`,`is_financial_allowed`,`created_at`,`created_ip`,`created_by`) VALUES (:user_id,:force_update_password,:kyc_status,:is_deposit_allowed,:is_withdrawal_allowed,:is_swap_allowed,:is_financial_allowed,:created_at,:created_ip,:created_by)";
-                $this->query($query);
-                $this->bind(':user_id', $userId);
-                $this->bind(':force_update_password', '0');
-                $this->bind(':kyc_status', '0');
-                $this->bind(':is_deposit_allowed', '0');
-                $this->bind(':is_withdrawal_allowed', '0');
-                $this->bind(':is_swap_allowed', '0');
-                $this->bind(':is_financial_allowed', '0');
-                $this->bind(':created_at', $time);
-                $this->bind(':created_ip', getClientIP());
-                $this->bind(':created_by', $userId);
-
-                $this->execute();
-
-
-
-
-                
-                $id = $this->lastInsertId();
-                if(!empty($userId) && !empty($id)) {
-                    
-                    $created_at =  $time;
-                    $created_by =  $userId;
-                    $created_ip = getClientIP();
-
-                   
-                    $this->query("INSERT INTO user_wallet SET user_id='$userId' , created_at = '$created_at' ,created_by = '$created_by' , created_ip = '$created_ip'");
-                    $this->execute();
-
-                    $ip['module'] = 'Register';
-                    $ip['action'] = 'register';
-                    $ip['activity'] = "New user registration";
-                    $ip['user_id'] = $userId;
-                    (new UserActivityLog)->saveUserLog($ip);
-                    $result = ['status' => 'Success','message' => Raise::t('register','suc_register'),'code' => '100'];   
-                }else{
-
-                    $result =  ['status' => 'Error','message' => Raise::t('common','something_wrong_text'),'code' => ''];    
-                }
-
-                  
-            }else{
-
-                $result =  ['status' => 'Error','message' => Raise::t('common','something_wrong_text'),'code' => ''];     
-            }
-
-        }else{
-            
-            $result =  ['status' => 'Error','message' => Raise::t('register','err_invalid_verification_code')]; 
-        }*/
 
 
 
@@ -336,10 +261,10 @@ class User extends Database
 
             $query = "INSERT INTO $this->tableName (`username`,`fullname`,`password`,`status`,`created_ip`,`created_at`,`created_by`,`email_verification_status`,`email_verify_time`,`email_verify_ip`) VALUES (:username,:fullname,:password,:status,:created_ip,:created_at,:created_by,:email_verification_status,:email_verify_time,:email_verify_ip)";
             $this->query($query);
-            $this->bind(':username', $email);
-            $this->bind(':fullname', $real_name);
-            $this->bind(':password', md5($password));
-            $this->bind(':status', '1');
+            $this->bind(':username', $username);
+            $this->bind(':fullname', $fullname);
+            $this->bind(':password', ($password));
+            $this->bind(':status', $status);
             $this->bind(':created_ip', getClientIP());
             $this->bind(':created_at', $time);
             $this->bind(':created_by', '0');
@@ -350,63 +275,19 @@ class User extends Database
             $this->execute();
             $userId = $this->lastInsertId();
 
+
             if(!empty($userId)){
-                
-                $data = [];
                
-
-
-                $query = "INSERT INTO user_info (`user_id`,`security_pin`,`force_update_password`,`kyc_status`,`is_deposit_allowed`,`is_withdrawal_allowed`,`is_swap_allowed`,`is_financial_allowed`,`created_at`,`created_ip`,`created_by`) VALUES (:user_id,:security_pin,:force_update_password,:kyc_status,:is_deposit_allowed,:is_withdrawal_allowed,:is_swap_allowed,:is_financial_allowed,:created_at,:created_ip,:created_by)";
-                $this->query($query);
-                $this->bind(':user_id', $userId);
-                $this->bind(':security_pin', $passcode);
-                $this->bind(':force_update_password', '0');
-                $this->bind(':kyc_status', '0');
-                $this->bind(':is_deposit_allowed', '1');
-                $this->bind(':is_withdrawal_allowed', '1');
-                $this->bind(':is_swap_allowed', '1');
-                $this->bind(':is_financial_allowed', '0');
-                $this->bind(':created_at', $time);
-                $this->bind(':created_ip', getClientIP());
-                $this->bind(':created_by', $userId);
-
-                $this->execute();
-
-
-
-
-                
-                $id = $this->lastInsertId();
-                if(!empty($userId) && !empty($id)) {
-                    
-                    $created_at =  $time;
-                    $created_by =  $userId;
-                    $created_ip = getClientIP();
-
-                   
-                    $this->query("INSERT INTO user_wallet SET user_id='$userId' , created_at = '$created_at' ,created_by = '$created_by' , created_ip = '$created_ip'");
-                    $this->execute();
-
-                    $ip['module'] = 'Register';
-                    $ip['action'] = 'register';
-                    $ip['activity'] = "New user registration";
-                    $ip['user_id'] = $userId;
-                    (new UserActivityLog)->saveUserLog($ip);
-                    
-                    $result = ['status' => 'Success','message' => Raise::t('register','suc_register'),'code' => '100'];   
-                }else{
-
-                    $result =  ['status' => 'Error','message' => Raise::t('common','something_wrong_text'),'code' => ''];    
-                }
-
+                return true;
                   
             }else{
-
-                $result =  ['status' => 'Error','message' => Raise::t('common','something_wrong_text'),'code' => ''];     
+            
+                return false;
+                     
             }
 
         
-        return $result;
+        return false;
 
     }
 
