@@ -13,13 +13,13 @@ class Mailer
     {
         $this->mailer = new PHPMailer();
 
-        $this->admin_email_username = '';
-        $this->admin_email_password = '';
+        $this->admin_email_username = 'book@programmingly.com';
+        $this->admin_email_password = 'bookuser';
     }
 
     public function send($email,$title,$subject,$message){
 
-        return true;
+        
 
         $this->mailer->CharSet  =  "utf-8";
         $this->mailer->IsSMTP();
@@ -32,7 +32,8 @@ class Mailer
         $this->mailer->Password = $this->admin_email_password;
         $this->mailer->SMTPSecure = "ssl";
         // sets ZOHO as the SMTP server
-        $this->mailer->Host     = "smtp.zoho.com";
+      //  $this->mailer->Host     = "smtp.zoho.com";
+        $this->mailer->Host     = "mail.programmingly.com";
         // set the SMTP port for the  server
         $this->mailer->Port     = "465";
 
@@ -43,6 +44,8 @@ class Mailer
         $this->mailer->Body    = $message;
 
         $send = $this->mailer->Send();
+
+       
         /*smtp mail */
 
         if ($send) {

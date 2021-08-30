@@ -12,7 +12,7 @@ use src\lib\ValidatorFactory;
 use src\models\User;
 use src\models\UserTokenList;
 use src\models\UserActivityLog;
-
+use src\lib\mailer\Mailer;
 
 
 class LoginController extends Controller
@@ -23,6 +23,7 @@ class LoginController extends Controller
     public function __construct()
     {
         parent::__construct();
+        $this->mdl=(new User);
     }
 
     public function actionTest(){
@@ -159,6 +160,56 @@ class LoginController extends Controller
 
     function checkEmail($email) {
          return (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $email)) ? false : true;
+    }
+
+
+    public function actionresetPassword()
+    {
+
+        $input  = $_POST;    
+        $email  = issetGet($input,'email','');
+
+        if(empty($email)) {
+            return $this->renderAPIError('Email cannot be empty','');  
+        }
+       
+        $checkemail = (new User)->callsql("SELECT fullname FROM user WHERE username='$email'","value");
+
+        if(empty($checkemail)) {
+
+            return $this->renderAPIError('Email does not Exist',''); 
+
+        } else {
+            
+
+            $rand_pass = rand();
+            $pass      = md5($rand_pass);
+            $this->mdl->query("UPDATE `user` SET `password`='$pass' WHERE username='$email'");
+            $this->mdl->execute();
+            $title = 'Reset Password';
+            $subject = 'Reset Password';
+            $message = 'Hi '.$checkemail.',Successfully submited the password reset request.This is your new password '.$rand_pass.'.Thank you.';
+            $this->sendMail($email,$title,$subject,$message);
+    
+            return $this->renderAPI([], 'Password sent to Mail', 'true', '', 'true', 200);
+
+        }
+        return $this->renderAPIError('Something went wrong','');
+    }
+
+    public function sendMail($email,$title,$subject,$message)
+    {
+
+        $mail = new Mailer();
+        $send = $mail->send($email,$title,$subject,$message);
+
+
+        if ($send) {
+            return true;
+        }else{
+            return false;
+        }
+
     }
 
 
