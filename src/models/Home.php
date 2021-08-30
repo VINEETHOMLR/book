@@ -54,7 +54,7 @@ class Home extends Database
         $where = " WHERE status=1 ";
         if(!empty($search)) {
             
-            $where.= " AND title LIKE '$search'";
+            $where.= " AND title LIKE '%$search%'";
         }
 
         $response = $this->callSql("SELECT * FROM $this->tableName $where ORDER BY count DESC, id DESC LIMIT 5","rows");
