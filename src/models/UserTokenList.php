@@ -128,7 +128,7 @@ class UserTokenList extends Database
 
         $this->query("UPDATE $this->tableName SET status = '0',expired_at = '".time()."',logout_at = '".time()."' WHERE user_id = '".$user_id."' AND status = 1 ");
 
-        $this->execute();
+        return $this->execute();
     }
 
     public function isTokenExist($token) {
@@ -154,6 +154,9 @@ class UserTokenList extends Database
         }
 
     }
+
+
+    
 
 
 }
