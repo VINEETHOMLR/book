@@ -232,7 +232,7 @@ class BookController extends Controller
 
 
         $userDetails = [];
-        $userDetails = $this->usermdl->getUserDetails($userId);
+        $userDetails = $this->usermdl->getUserDetails($author_id);
         if(empty($userDetails)) {
             return $this->renderAPI($data, 'Invalid author', 'false', 'S01', 'false', 200);
         }
