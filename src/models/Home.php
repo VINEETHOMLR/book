@@ -69,7 +69,7 @@ class Home extends Database
                     $rows[$key]['id']    = !empty($info['id'])?strval($info['id']):'-';
                     $rows[$key]['title']  = !empty($info['title'])?$info['title']:'-';
                     $rows[$key]['author']  = !empty($author)?$author:'-';
-                    $rows[$key]['cover_photo'] = !empty($info['cover_photo'])?BASEURL.'web/uploads/cover/'.$info['cover_photo']:'';
+                    $rows[$key]['cover_photo'] = !empty($info['cover_photo'])?BASEURL.'web/upload/cover/'.$info['cover_photo']:'';
                     $rows[$key]['synopsis']  = !empty($info['synopsis'])?$info['synopsis']:'-';
                     
                 }
