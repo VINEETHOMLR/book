@@ -13,6 +13,7 @@ use src\models\User;
 use src\models\Book;
 use src\models\Category;
 use src\models\ClickCount;
+use src\models\Bookmark;
 
 
 
@@ -245,6 +246,58 @@ class BookController extends Controller
       
         
         return $this->renderAPI($data, 'Author Data', 'false', 'S01', 'true', 200); 
+
+
+    }
+
+    public function actionBookmark(){
+
+        $input          = $_POST;
+        $userObj        = Raise::$userObj;
+        $userId         = $userObj['id']; 
+        $book_id        = issetGet($input,'book_id',''); 
+        $action         = issetGet($input,'action',''); 
+        if(empty($userId)) {
+
+            return $this->renderAPIError('Userid cannot be empty','');  
+        } 
+        if(empty($book_id)) {
+
+            return $this->renderAPIError('Please select book to proceed','');  
+        }
+
+        if(empty($action)) { //insert
+            
+            $alreadyAdded = (new Bookmark)->checkAlreadyAdded($book_id,$userId);
+
+            if(empty($alreadyAdded)) {
+
+                $params = [];
+                $params['user_id'] = $userId;
+                $params['book_id'] = $book_id;
+                (new Bookmark)->insertBookmark($params);
+            }
+        } 
+
+        if($action == '1') { //remove
+            
+            $params = [];
+            $params['user_id'] = $userId;
+            $params['book_id'] = $book_id;
+            (new Bookmark)->updateBookmark($params);
+        }
+
+        $params = [];
+        $params['user_id'] = $userId;
+        $bookmarkList = (new Bookmark)->getBookMarkList($params);
+        $data = [];
+        $data['bookmarkList'] = $bookmarkList;
+        return $this->renderAPI($data, 'Bookmark List', 'false', 'S01', 'true', 200); 
+        
+
+        
+
+
 
 
     }

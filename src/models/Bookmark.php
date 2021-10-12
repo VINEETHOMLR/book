@@ -12,7 +12,7 @@ use src\traits\ModelTrait;
 use src\lib\Helper as H;
 
 
-class Book extends Database
+class Bookmark extends Database
 {
     use ModelTrait, FilterTrait, DataTableTrait;
     protected $pk = 'id';
@@ -24,7 +24,7 @@ class Book extends Database
         
         parent::__construct(Raise::db()[$db]);
 
-        $this->tableName = "book";
+        $this->tableName = "bookmark";
 
         $this->columns = [
             'id', 
@@ -121,7 +121,7 @@ class Book extends Database
                     $rows[$key]['id']    = !empty($info['id'])?strval($info['id']):'-';
                     $rows[$key]['title']  = !empty($info['title'])?$info['title']:'-';
                     $rows[$key]['author']  = !empty($author)?$author:'-';
-                    $rows[$key]['cover_photo'] = !empty($info['cover_photo'])?BASEURL.'web/upload/cover/'.$info['cover_photo']:'';
+                    $rows[$key]['cover_photo'] = !empty($info['cover_photo'])?BASEURL.'web/uploads/cover/'.$info['cover_photo']:'';
                     $rows[$key]['synopsis']  = !empty($info['synopsis'])?$info['synopsis']:'-';
                     
                 }
@@ -156,30 +156,87 @@ class Book extends Database
     }
 
 
-    public function insertBook($params){
+    public function insertBookmark($params){
 
         $user_id         = !empty($params['user_id']) ? $params['user_id'] : '';
-        $title           = !empty($params['title']) ? $params['title'] : '';
-        $category_id     = !empty($params['category_id']) ? $params['category_id'] : '';
-        $synopsis        = !empty($params['synopsis']) ? $params['synopsis'] : '';
-        $cover_photo     = !empty($params['cover_photo']) ? $params['cover_photo'] : '';
-        $pdf_file        = !empty($params['pdf_file']) ? $params['pdf_file'] : '';
+        $book_id         = !empty($params['book_id']) ? $params['book_id'] : '';
         $status          = '1';
         $created_at      = time();
-        $query = "INSERT INTO $this->tableName (`user_id`,`title`,`category_id`,`status`,`created_at`,`synopsis`,`cover_photo`,`pdf_file`) VALUES(:user_id,:title,:category_id,:status,:created_at,:synopsis,:cover_photo,:pdf_file)";
+        $query = "INSERT INTO $this->tableName (`user_id`,`book_id`,`status`,`created_at`) VALUES(:user_id,:book_id,:status,:created_at)";
         $this->query($query);
         $this->bind(':user_id', $user_id);
-        $this->bind(':title', $title);
-        $this->bind(':category_id', ($category_id));
-        $this->bind(':synopsis', $synopsis);
-        $this->bind(':cover_photo', $cover_photo);
-        $this->bind(':pdf_file', $pdf_file);
+        $this->bind(':book_id', $book_id);
         $this->bind(':created_at', $created_at);
         $this->bind(':status', $status);
         if($this->execute()){
             return true;
         }
         return false;
+
+    }
+
+    public function updateBookmark($params){
+
+        $user_id         = !empty($params['user_id']) ? $params['user_id'] : '';
+        $book_id         = !empty($params['book_id']) ? $params['book_id'] : '';
+        $status          = '2';
+        $updated_at      = time();
+        $query = "UPDATE $this->tableName SET status='2',updated_at=$updated_at WHERE user_id=$user_id AND book_id=$book_id";
+        $this->query($query);
+        if($this->execute()){
+            return true;
+        }
+        return false;
+
+    }
+
+    public function checkAlreadyAdded($book_id,$user_id){
+        
+        return  $this->callSql("SELECT * FROM $this->tableName WHERE user_id=$user_id AND book_id=$book_id AND status=1","rows");
+    }
+
+    public function getBookMarkList($params){
+
+        $user_id         = !empty($params['user_id']) ? $params['user_id'] : '';
+
+        $where = " WHERE status=1 ";
+        if(!empty($params['user_id'])) {
+            
+            $where.= " AND user_id=$params[user_id]";
+        }
+        $response = $this->callSql("SELECT * FROM $this->tableName $where  ORDER BY id DESC ","rows");
+
+
+        $rows = array();
+
+        if (!empty($response)) {
+                foreach ($response as $key => $info) {
+
+
+                    $bookDetails = $this->callSql("SELECT *  FROM book WHERE id=$info[book_id] AND status=1","row");
+
+                    if(!empty($bookDetails)) {
+                        
+                        $author_id  = $info['user_id'];
+                        $author     = $this->callSql("SELECT fullname FROM user WHERE id=$author_id","value");
+                   
+                        $rows[$key]['book_id']    = !empty($bookDetails['id'])?strval($bookDetails['id']):'-';
+                        $rows[$key]['title']  = !empty($bookDetails['title'])?$bookDetails['title']:'-';
+                        $rows[$key]['author']  = !empty($author)?$author:'-';
+                        $rows[$key]['cover_photo'] = !empty($bookDetails['cover_photo'])?BASEURL.'web/upload/cover/'.$bookDetails['cover_photo']:'';
+                        $rows[$key]['synopsis']  = !empty($info['synopsis'])?$info['synopsis']:'-';
+                    }
+                    
+                    
+                    
+                }
+        }
+
+       
+
+        
+
+        return !empty($rows) ? $rows :$rows;
 
     }
     
