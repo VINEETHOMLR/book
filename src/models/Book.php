@@ -144,10 +144,10 @@ class Book extends Database
             $author_id  = $bookDetails['user_id'];
             $author = $this->callSql("SELECT fullname FROM user WHERE id=$author_id","value");
             $result['title']       = !empty($bookDetails['title']) ? $bookDetails['title'] : '';
-            $result['cover_photo'] = !empty($bookDetails['cover_photo']) ? BASEURL.'web/uploads/cover/'.$bookDetails['cover_photo'] : '';
+            $result['cover_photo'] = !empty($bookDetails['cover_photo']) ? BASEURL.'web/upload/cover/'.$bookDetails['cover_photo'] : '';
             $result['author']      = !empty($author) ? $author : '';
             $result['synopsis']    = !empty($bookDetails['synopsis'])?$bookDetails['synopsis']:'-';
-            $result['pdf_file']    = !empty($bookDetails['pdf_file']) ? BASEURL.'web/uploads/pdf/'.$bookDetails['pdf_file'] : '';
+            $result['pdf_file']    = !empty($bookDetails['pdf_file']) ? BASEURL.'web/upload/pdf/'.$bookDetails['pdf_file'] : '';
             $result['author_id']       = !empty($bookDetails['user_id']) ? $bookDetails['user_id'] : '';
         }
 
