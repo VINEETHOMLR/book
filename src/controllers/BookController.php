@@ -153,11 +153,11 @@ class BookController extends Controller
         }
         if(!empty($_FILES['cover_image'])) {
 
-            $title = trim($title); // Trims both ends
-            $title = str_replace(' ', '_', $title);
+            $filetitle = trim($title); // Trims both ends
+            $filetitle = str_replace(' ', '_', $filetitle);
             
             $path           = 'web/upload/cover/';
-            $file_name      = 'cover_'.$title.$userId.'_'.time();
+            $file_name      = 'cover_'.$filetitle.$userId.'_'.time();
             $uploadResponse = $this->uploadImage($_FILES['cover_image'],$path,$file_name); 
             $response = $uploadResponse['status'];
             if($response == 'false') {
@@ -174,11 +174,11 @@ class BookController extends Controller
         $pdf_file = '';
         if(!empty($_FILES['pdf_file'])) {
 
-            $title = trim($title); // Trims both ends
-            $title = str_replace(' ', '_', $title);
+            $filetitle = trim($title); // Trims both ends
+            $filetitle = str_replace(' ', '_', $filetitle);
             
             $path           = 'web/upload/pdf/';
-            $file_name      = 'book_'.$title.$userId.'_'.time();
+            $file_name      = 'book_'.$filetitle.$userId.'_'.time();
             $uploadResponse = $this->uploadPdf($_FILES['pdf_file'],$path,$file_name); 
             $response = $uploadResponse['status'];
             if($response == 'false') {
