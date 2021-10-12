@@ -119,6 +119,16 @@ class BookController extends Controller
         $title          = issetGet($input,'title','');
         $category_id    = issetGet($input,'category_id','');
         $synopsis       = issetGet($input,'synopsis','');
+
+        $log = ['user_id'=>$userId,'request'=>json_encode($_FILES)];
+        $request = json_encode($_FILES);
+       
+
+
+        $this->usermdl->query(" INSERT INTO `api_log` SET `user_id`='$userId',`request`='$request'");
+         
+            
+            $this->usermdl->execute();
         
         if(empty($userId)) {
 
@@ -142,6 +152,9 @@ class BookController extends Controller
             return $this->renderAPIError('Please upload cover image to proceed','');      
         }
         if(!empty($_FILES['cover_image'])) {
+
+            $title = trim($title); // Trims both ends
+            $title = str_replace(' ', '_', $title);
             
             $path           = 'web/upload/cover/';
             $file_name      = 'cover_'.$title.$userId.'_'.time();
@@ -160,6 +173,9 @@ class BookController extends Controller
         }
         $pdf_file = '';
         if(!empty($_FILES['pdf_file'])) {
+
+            $title = trim($title); // Trims both ends
+            $title = str_replace(' ', '_', $title);
             
             $path           = 'web/upload/pdf/';
             $file_name      = 'book_'.$title.$userId.'_'.time();
@@ -195,6 +211,40 @@ class BookController extends Controller
 
 
         
+
+
+    }
+
+    public function actionAboutauthor(){
+
+        $input          = $_POST;
+        $userObj        = Raise::$userObj;
+        $userId         = $userObj['id']; 
+        $author_id          = issetGet($input,'author_id',''); 
+        if(empty($userId)) {
+
+            return $this->renderAPIError('Userid cannot be empty','');  
+        } 
+        if(empty($author_id)) {
+
+            return $this->renderAPIError('Please select author to proceed','');  
+        }  
+
+
+        $userDetails = [];
+        $userDetails = $this->usermdl->getUserDetails($userId);
+        if(empty($userDetails)) {
+            return $this->renderAPI($data, 'Invalid author', 'false', 'S01', 'false', 200);
+        }
+
+        $data = [];
+        $data['name']  = !empty($userDetails['fullname']) ? $userDetails['fullname'] : '';
+        $data['about'] = !empty($userDetails['about']) ? $userDetails['about'] : '';
+        $data['profile_pic'] = !empty($userDetails['profile_pic']) ? BASEURL.'web/upload/profile/'.$userDetails['profile_pic'] : '';
+        
+      
+        
+        return $this->renderAPI($data, 'Author Data', 'false', 'S01', 'true', 200); 
 
 
     }
