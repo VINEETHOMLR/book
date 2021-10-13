@@ -107,6 +107,13 @@ class Book extends Database
             
             $where.= " AND category_id=$params[category_id]";
         }
+
+        if(!empty($params['user_id'])) {
+            
+            $where.= " AND user_id=$params[user_id]";
+        }
+
+
         $response = $this->callSql("SELECT * FROM $this->tableName $where  ORDER BY id DESC ","rows");
 
 
@@ -149,6 +156,7 @@ class Book extends Database
             $result['synopsis']    = !empty($bookDetails['synopsis'])?$bookDetails['synopsis']:'-';
             $result['pdf_file']    = !empty($bookDetails['pdf_file']) ? BASEURL.'web/upload/pdf/'.$bookDetails['pdf_file'] : '';
             $result['author_id']       = !empty($bookDetails['user_id']) ? $bookDetails['user_id'] : '';
+            $result['status']       = !empty($bookDetails['status']) ? $bookDetails['status'] : '';
         }
 
         return $result;

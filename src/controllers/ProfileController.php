@@ -46,7 +46,9 @@ class ProfileController extends Controller
         $data['about'] = !empty($userDetails['about']) ? $userDetails['about'] : '';
         $data['profile_pic'] = !empty($userDetails['profile_pic']) ? BASEURL.'web/upload/profile/'.$userDetails['profile_pic'] : '';
         
-        $data['bookList'] = [];
+        $params = [];
+        $params['user_id'] = $userId;
+        $data['bookList']  = (new Book)->getList($params);
         
         return $this->renderAPI($data, 'Profile Data', 'false', 'S01', 'true', 200);
 
