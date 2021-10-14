@@ -144,9 +144,17 @@ class Book extends Database
 
     public function getDetails($id){
         
+        $userObj = Raise::$userObj;
+        $userId  = $userObj['id'];
+
+
         $bookDetails = $this->callSql("SELECT * FROM $this->tableName WHERE id=$id","row");
         $result = [];
         if(!empty($bookDetails)) {
+
+
+            $bookmarkDetails = $this->callSql("SELECT id FROM bookmark WHERE user_id=$userId AND book_id=$id AND status=1","value");
+            $book_mark_status  = !empty($bookmarkDetails) ? 'true':'false';
             
             $author_id  = $bookDetails['user_id'];
             $author = $this->callSql("SELECT fullname FROM user WHERE id=$author_id","value");
@@ -157,6 +165,7 @@ class Book extends Database
             $result['pdf_file']    = !empty($bookDetails['pdf_file']) ? BASEURL.'web/upload/pdf/'.$bookDetails['pdf_file'] : '';
             $result['author_id']       = !empty($bookDetails['user_id']) ? $bookDetails['user_id'] : '';
             $result['status']       = !empty($bookDetails['status']) ? $bookDetails['status'] : '';
+            $result['book_mark_status']       = $book_mark_status;
         }
 
         return $result;
