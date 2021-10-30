@@ -1,7 +1,7 @@
 <?php
 
 namespace src\controllers;
-
+//namespace Sample;
 use inc\Controller;
 use inc\Raise;
 use src\lib\Router;
@@ -13,11 +13,24 @@ use src\models\User;
 use src\models\UserTokenList;
 use src\models\UserActivityLog;
 use src\lib\mailer\Mailer;
+//use src\lib\Test;
+
+//echo $_SERVER['DOCUMENT_ROOT'];exit;
+
+//require $_SERVER['DOCUMENT_ROOT'].'/book/vendor/autoload.php';
+
+/*use Sample\PayPalClient;
+use PaypalPayoutsSDK\Payouts\PayoutsPostRequest;
+use PayPalHttp\HttpException;*/
+
+/*use PaypalPayoutsSDK\Core\PayPalHttpClient;
+use PaypalPayoutsSDK\Core\SandboxEnvironment;
+use PaypalPayoutsSDK\Payouts\PayoutsPostRequest;*/
 
 
 class LoginController extends Controller
 {
-     protected $needAuth = false;
+    protected $needAuth = false;
     protected $authExclude = [];
 
     public function __construct()
@@ -26,8 +39,153 @@ class LoginController extends Controller
         $this->mdl=(new User);
     }
 
-    public function actionTest(){
+    public function actionVin(){
+
+
+       $sender_batch_id = mt_rand(100000000000000,999999999999999);
+$sender_item_id = mt_rand(100000000000000,999999999999999);
+
+
+$PAYPAL_CLIENT_ID = 'AcsrvEWcV_6BMpLI-RzgVV1DitWS68VgvT2kYxrSJUnVy7wS9iQrKL901gJ9COpQScfzYxH2AcLKWo0F';
+$PAYPAL_SECRET = 'EIXbd2ZM9k9vVQCNWr-22QZ3tJ5yDXG5KTvu2jjNE5XfMd2w3mHvCUs7_OAKgdgJIFKO2pH7fymp2UxS';
+
+$curl = curl_init();
+    curl_setopt_array($curl, array(
+    CURLOPT_URL => "https://api.sandbox.paypal.com/v1/oauth2/token",
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => "",
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => "POST",
+    CURLOPT_USERPWD => $PAYPAL_CLIENT_ID.":".$PAYPAL_SECRET,
+    CURLOPT_POSTFIELDS => "grant_type=client_credentials",
+    CURLOPT_HTTPHEADER => array(
+    "Accept: application/json",
+    "Accept-Language: en_US"
+    ),
+    ));
+
+    $result= curl_exec($curl);
+
+    $array=json_decode($result, true);
+
+
+
+
+//$access_token = 'A21AAGpxXlEt3iIG7fKiriFDdLwIW_JJvpOa9IwVb8XXJbeVjL9MkHvmYWbWkHgVReeiuEQaYZTbi6xSWbXGMlLaabJPwkdYg';  //Dummy
+$access_token = $array['access_token'];  //Dummy
+
+
+/*
+
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+curl_setopt($ch, CURLOPT_URL, "https://api-m.sandbox.paypal.com/v1/payments/payouts?sync_mode=false");    //DUMMY
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"sender_batch_header\":{\"sender_batch_id\":\"$sender_batch_id\",\"email_subject\":\"You have a payout!\",\"recipient_type\":\"EMAIL\"},\"items\":[{\"recipient_type\":\"EMAIL\",\"amount\":{\"value\":\"3.3\",\"currency\":\"USD\"},\"note\":\"Thanks for your patronage!\",\"sender_item_id\":\"$sender_item_id\",\"receiver\":\"sb-j6axr8352514@personal.example.com\" }]}");  //DUMMY
+
+
+curl_setopt($ch, CURLOPT_POST, 1);
+
+$headers = array();
+$headers[] = "Content-Type: application/json";
+$headers[] = "Authorization: Bearer $access_token";
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+$result = curl_exec($ch);
+print_r(json_decode($result));
+if (curl_errno($ch)) {
+    echo 'Error:' . curl_error($ch);
+}
+curl_close ($ch);
+
+exit;*/
+
+
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+curl_setopt($ch, CURLOPT_URL, "https://api.sandbox.paypal.com/v1/payments/payouts/3DED57YS94L32");    //DUMMY
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+//curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"sender_batch_header\":{\"sender_batch_id\":\"$sender_batch_id\",\"email_subject\":\"You have a payout!\",\"recipient_type\":\"EMAIL\"},\"items\":[{\"recipient_type\":\"EMAIL\",\"amount\":{\"value\":\"1.0\",\"currency\":\"USD\"},\"note\":\"Thanks for your patronage!\",\"sender_item_id\":\"$sender_item_id\",\"receiver\":\"buy1911@gmail.com\" }]}");  //DUMMY
+
+
+curl_setopt($ch, CURLOPT_POST, 0);
+
+$headers = array();
+$headers[] = "Content-Type: application/json";
+$headers[] = "Authorization: Bearer $access_token";
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+$result = curl_exec($ch);
+print_r(json_decode($result));
+
+curl_close ($ch);
+
+//https://api.sandbox.paypal.com/v1/payments/payouts/LFAVDTTPVGHS8
+
+    }
+
+    public function actionTest321(){
+
+
+
         echo "hai";
+
+        $clientId = "123";
+        $clientSecret = "321";
+
+        $environment = new SandboxEnvironment($clientId, $clientSecret);
+        $client = new PayPalHttpClient($environment);
+        $request = new PayoutsPostRequest();
+
+
+        $body= json_decode(
+            '{
+                "sender_batch_header":
+                {
+                  "email_subject": "SDK payouts test txn"
+                },
+                "items": [
+                {
+                  "recipient_type": "EMAIL",
+                  "receiver": "payouts2342@paypal.com",
+                  "note": "Your 1$ payout",
+                  "sender_item_id": "Test_txn_12",
+                  "amount":
+                  {
+                    "currency": "USD",
+                    "value": "1.00"
+                  }
+                }]
+              }',             
+            true);
+
+echo "<pre>";
+        print_r($body);
+
+
+$request->body = $body;
+
+require $_SERVER['DOCUMENT_ROOT'].'/book/vendor/paypal/paypal-payouts-sdk/samples/PayPalClient.php';
+
+$test = new PayPalClient();
+
+print_r($test);exit;
+
+$client = $test->client();
+$response = $client->execute($request);
+
+echo "<pre>";
+print_r($response);exit;
+
+        exit;
     }
 
     public function actionLogin()
