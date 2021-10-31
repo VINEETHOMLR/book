@@ -250,7 +250,7 @@ class BookController extends Controller
 
     }
 
-    public function actionBookmark(){
+  public function actionBookmark(){
 
         $input          = $_POST;
         $userObj        = Raise::$userObj;
@@ -261,31 +261,56 @@ class BookController extends Controller
 
             return $this->renderAPIError('Userid cannot be empty','');  
         } 
-        if(empty($book_id)) {
 
-            return $this->renderAPIError('Please select book to proceed','');  
-        }
-
-        if(empty($action)) { //insert
+        if(!empty($action)) {
             
-            $alreadyAdded = (new Bookmark)->checkAlreadyAdded($book_id,$userId);
+           if(empty($book_id)) {
 
-            if(empty($alreadyAdded)) {
+               return $this->renderAPIError('Please select book to proceed','');  
 
+           }
+
+            $bookDetails       = (new Book)->getDetails($book_id);
+
+            if(empty($bookDetails)) {
+                
+                return $this->renderAPIError('Invalid book','');
+            }
+
+            if(!empty($bookDetails) && $bookDetails['status']!='1' ) {
+                
+                return $this->renderAPIError('Invalid book','');
+            }
+        }
+        
+
+        if(!empty($action)) { 
+
+            if($action == '1') { //add
+                
+                $alreadyAdded = (new Bookmark)->checkAlreadyAdded($book_id,$userId);
+
+                if(empty($alreadyAdded)) {
+
+                    $params = [];
+                    $params['user_id'] = $userId;
+                    $params['book_id'] = $book_id;
+                    (new Bookmark)->insertBookmark($params);
+                }
+            }
+            
+            
+
+            if($action == '2') { //remove
+            
                 $params = [];
                 $params['user_id'] = $userId;
                 $params['book_id'] = $book_id;
-                (new Bookmark)->insertBookmark($params);
+                (new Bookmark)->updateBookmark($params);
             }
         } 
 
-        if($action == '1') { //remove
-            
-            $params = [];
-            $params['user_id'] = $userId;
-            $params['book_id'] = $book_id;
-            (new Bookmark)->updateBookmark($params);
-        }
+       
 
         $params = [];
         $params['user_id'] = $userId;
