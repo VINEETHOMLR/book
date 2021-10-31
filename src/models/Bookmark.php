@@ -224,7 +224,7 @@ class Bookmark extends Database
                         $rows[$key]['title']  = !empty($bookDetails['title'])?$bookDetails['title']:'-';
                         $rows[$key]['author']  = !empty($author)?$author:'-';
                         $rows[$key]['cover_photo'] = !empty($bookDetails['cover_photo'])?BASEURL.'web/upload/cover/'.$bookDetails['cover_photo']:'';
-                        $rows[$key]['synopsis']  = !empty($info['synopsis'])?$info['synopsis']:'-';
+                        $rows[$key]['synopsis']  = !empty($bookDetails['synopsis'])?$bookDetails['synopsis']:'-';
                     }
                     
                     
