@@ -122,6 +122,33 @@ class ProfileController extends Controller
 
     }
 
+    public function actionTransactionHistory(){
+
+        
+        
+        $input   = $_POST;
+        $userObj = Raise::$userObj;
+        $userId  = $userObj['id'];
+        if(empty($userId)) {
+            return $this->renderAPIError('Userid cannot be empty','');  
+        }
+
+        $data = [];
+        $data['current_holding'] = '$36.50 USD';
+
+        $transactionList = [];
+        $transactionList[0] = ['amount'=>'$ 45.60 USD','paid_on'=>'17th Aug,2021'];
+        $transactionList[1] = ['amount'=>'$ 46.60 USD','paid_on'=>'18th Aug,2021'];
+        $transactionList[2] = ['amount'=>'$ 47.60 USD','paid_on'=>'19th Aug,2021'];
+        $data['transactionList'] = $transactionList;
+
+
+        return $this->renderAPI($data, 'Transaction History', 'false', 'S01', 'true', 200);  
+
+       
+
+    }
+
 
 
     function uploadImage($file,$path,$file_name){
