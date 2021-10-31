@@ -133,6 +133,30 @@ class ClickCount extends Database
 
         
     }
+
+
+    public function addClickLog($params){
+
+
+        
+        $created_at     = time();
+        $clicked_by     = $params['clicked_by'];
+        $beneficiery_id = $params['beneficiery_id'];
+        $book_id        = $params['book_id'];
+        $status         = $params['status'];
+        $query = "INSERT INTO click_log (`clicked_by`,`beneficiery_id`,`book_id`,`created_at`,`status`) VALUES (:clicked_by,:beneficiery_id,:book_id,:created_at,:status)";
+
+
+        $this->query($query);
+        $this->bind(':clicked_by', $clicked_by);
+        $this->bind(':beneficiery_id', $beneficiery_id);
+        $this->bind(':book_id', $book_id);
+        $this->bind(':created_at', $created_at);
+        $this->bind(':status', $status);
+        
+        $this->execute();
+
+    }
     
     
 

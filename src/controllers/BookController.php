@@ -103,9 +103,21 @@ class BookController extends Controller
         $bookDetails       = (new Book)->getDetails($book_id);
         $data = [];
         $data['bookDetails'] = $bookDetails;
+
+
         if(!empty($bookDetails) && $bookDetails['author_id']!=$userId) {
             
             $this->updateCount($book_id,$userId);
+            //add click log
+  
+            $params = [];
+            $params['clicked_by']     = $userId;
+            $params['beneficiery_id'] = $bookDetails['author_id'];
+            $params['book_id']        = $book_id;
+            $params['status']         = '1';
+            (new ClickCount)->addClickLog($params);
+
+
         }
         return $this->renderAPI($data, 'Book Details', 'false', 'S01', 'true', 200);
 
@@ -312,6 +324,8 @@ class BookController extends Controller
     
 
     }
+
+
 
   
 
