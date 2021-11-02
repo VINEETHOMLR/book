@@ -57,6 +57,33 @@ class ProfileController extends Controller
 
     }
 
+    public function actionTransactionHistory(){
+
+        
+        
+        $input   = $_POST;
+        $userObj = Raise::$userObj;
+        $userId  = $userObj['id'];
+        if(empty($userId)) {
+            return $this->renderAPIError('Userid cannot be empty','');  
+        }
+
+        $data = [];
+        $data['current_holding'] = '$36.50 USD';
+
+        $transactionList = [];
+        $transactionList[0] = ['amount'=>'$ 45.60 USD','paid_on'=>'17th Aug,2021'];
+        $transactionList[1] = ['amount'=>'$ 46.60 USD','paid_on'=>'18th Aug,2021'];
+        $transactionList[2] = ['amount'=>'$ 47.60 USD','paid_on'=>'19th Aug,2021'];
+        $data['transactionList'] = $transactionList;
+
+
+        return $this->renderAPI($data, 'Transaction History', 'false', 'S01', 'true', 200);  
+
+       
+
+    }
+
     public function actionUpdateProfile(){
 
 
@@ -117,6 +144,73 @@ class ProfileController extends Controller
 
         return $this->renderAPIError('Something went wrong','');  
 
+
+
+
+    }
+
+    public function actionGetPaypalEmail()
+    {
+
+        
+        $input   = $_POST;
+        $userObj = Raise::$userObj;
+        $userId  = $userObj['id'];
+        if(empty($userId)) {
+            return $this->renderAPIError('Userid cannot be empty','');  
+        }
+
+        $userDetails         = $this->usermdl->getUserDetails($userId);
+        $paypal_email        = !empty($userDetails['paypal_email']) ? $userDetails['paypal_email'] : '';
+        $paypal_email_status = !empty($paypal_email) ? '1' : '0';
+
+        $data = [];
+        $data['paypal_email_status'] = $paypal_email_status;
+        $data['paypal_email']        = $paypal_email;
+
+        return $this->renderAPI($data, 'Paypalemail Data', 'false', 'S01', 'true', 200);    
+
+
+
+
+    }
+
+    public function actionUpdatePaypalEmail()
+    {
+
+        $input           = $_POST;
+        $userObj         = Raise::$userObj;
+        $userId          = $userObj['id'];
+        $paypal_email    = issetGet($input,'paypal_email','');
+        if (empty($userId)) {
+            return $this->renderAPIError('Userid cannot be empty','');  
+        }
+        if (empty($paypal_email)) {
+            
+            return $this->renderAPIError('Email cannot be empty','');
+        }
+
+        if (!filter_var($paypal_email, FILTER_VALIDATE_EMAIL)) {
+
+            return $this->renderAPIError('Emailid not in the correct format','');
+        }
+
+        $sql   = "UPDATE user SET paypal_email='$paypal_email' WHERE id=$userId";
+        $this->usermdl->query($sql);
+        $this->usermdl->execute();
+
+        $userDetails         = $this->usermdl->getUserDetails($userId);
+        $paypal_email        = !empty($userDetails['paypal_email']) ? $userDetails['paypal_email'] : '';
+        $paypal_email_status = !empty($paypal_email) ? '1' : '0';
+
+        $data = [];
+        $data['paypal_email_status'] = $paypal_email_status;
+        $data['paypal_email']        = $paypal_email;
+
+        return $this->renderAPI($data, 'Paypalemail Data', 'false', 'S01', 'true', 200);
+         
+
+        
 
 
 

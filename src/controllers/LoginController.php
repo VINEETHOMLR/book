@@ -74,7 +74,7 @@ $curl = curl_init();
 
 
 //$access_token = 'A21AAGpxXlEt3iIG7fKiriFDdLwIW_JJvpOa9IwVb8XXJbeVjL9MkHvmYWbWkHgVReeiuEQaYZTbi6xSWbXGMlLaabJPwkdYg';  //Dummy
-$access_token = $array['access_token'];  //Dummy
+echo $access_token = $array['access_token'];  //Dummy
 
 
 /*

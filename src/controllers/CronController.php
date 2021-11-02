@@ -53,17 +53,79 @@ class CronController extends Controller
 
 
             //change the status of cuurent running payout
-            $sql   = "UPDATE payout SET status=2 WHERE id=$payout_id";
+            /*$sql   = "UPDATE payout SET status=2 WHERE id=$payout_id";
             $model->query($sql);
-            $model->execute();
+            $model->execute();*/
 
 
             $total_amount = !empty($payoutDetails['amount']) ? $payoutDetails['amount'] : '0';
             if(!empty($total_amount)) { //do the payout steps
 
-              //  $total_click_entire_app =        
+                
+                $start_time              = $payoutDetails['start_time'];
+                $end_time                = $payoutDetails['end_time'];
+                //$total_click_entire_app  = $model->callsql("SELECT count(DISTINCT(book_id)) from click_log WHERE created_at BETWEEN '$start_time' AND '$end_time'",'rows');
+
+                
+
+               
+
+                $user_wise_click          = $model->callsql("SELECT count(DISTINCT(book_id)) as click_count,beneficiery_id FROM `click_log` WHERE created_at BETWEEN '$start_time' AND '$end_time'group by beneficiery_id ",'rows');
+
+                $total_click_entire_app = '0';                 
+                if(!empty($user_wise_click)) {
+
+                    foreach($user_wise_click as $k=>$v){
+                        
+                        $total_click_entire_app += $v['click_count'];
+
+                    }
+                }
+
+                
+
+                if(!empty($user_wise_click)) {
+
+                   
+                    
+                    foreach($user_wise_click as $k=>$v){
+
+                        $user_revenue = ($v['click_count']/$total_click_entire_app)*$total_amount; //amount calculation
+
+                        $user_revenue = number_format($user_revenue,2);
+
+                        $params = [];
+                        /*$params['user_id']            = $v['beneficiery_id'];
+                        $params['total_amount']       = $total_amount;
+                        $params['entire_app_click']   = $total_click_entire_app;
+                        $params['total_user_click']   = $v['click_count'];
+                        $params['amount_transfered']  = $user_revenue;
+                        $params['status']             = 1;
+                        $params['payout_id']          = $payoutDetails['id'];*/
+
+                        $sql   = "INSERT INTO transaction SET user_id=$v[beneficiery_id],total_amount='$total_amount',entire_app_click='$total_click_entire_app',total_user_click=$v[click_count],amount_transfered='$user_revenue',status='1',payout_id=$payoutDetails[id]";
+
+                        
+                        $model->query($sql);
+                        $model->execute();
+
+                        $transaction_id  = $model->lastInsertId();
+                        $this->sendMoney($transaction_id,$user_revenue);
+
+                    }
+                }
+                
+
+
+
+                
+
+
 
             }
+
+
+            exit;
 
 
             //change the status of the current calculating payout 
@@ -97,6 +159,97 @@ class CronController extends Controller
 
 
         echo "<pre>";
+
+    }
+
+
+    public function sendMoney($transaction_id,$amount)
+    {
+        
+
+        $model               = new User();
+        $transactionDetails  =  $model->callsql("SELECT *  from transaction WHERE id=$transaction_id ",'row');
+        $userDetails         =  $model->callsql("SELECT *  from user WHERE id=$transactionDetails[user_id] ",'row');
+        
+
+
+        $sender_batch_id  = mt_rand(100000000000000,999999999999999);
+        $sender_item_id   = mt_rand(100000000000000,999999999999999);
+
+        $PAYPAL_CLIENT_ID = 'AcsrvEWcV_6BMpLI-RzgVV1DitWS68VgvT2kYxrSJUnVy7wS9iQrKL901gJ9COpQScfzYxH2AcLKWo0F';
+        $PAYPAL_SECRET    = 'EIXbd2ZM9k9vVQCNWr-22QZ3tJ5yDXG5KTvu2jjNE5XfMd2w3mHvCUs7_OAKgdgJIFKO2pH7fymp2UxS';
+
+
+        $token_request = array(
+            CURLOPT_URL => "https://api.sandbox.paypal.com/v1/oauth2/token",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_USERPWD => $PAYPAL_CLIENT_ID.":".$PAYPAL_SECRET,
+            CURLOPT_POSTFIELDS => "grant_type=client_credentials",
+            CURLOPT_HTTPHEADER => array(
+            "Accept: application/json",
+            "Accept-Language: en_US"
+            ),
+        );
+
+        $token_request = json_encode($token_request);
+        $type          = '1';
+        $request       = $token_request;
+        $request_time  = time();
+        $request_ip    = $_SERVER['REMOTE_ADDR'];
+
+
+        $sql   = "INSERT INTO payout_api_log SET transaction_id='$transaction_id',type='$type',request='$request',request_time='$request_time',request_ip='$request_ip'";
+        $model->query($sql);
+        $model->execute();
+        $log_id  = $model->lastInsertId();
+
+
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.sandbox.paypal.com/v1/oauth2/token",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_USERPWD => $PAYPAL_CLIENT_ID.":".$PAYPAL_SECRET,
+            CURLOPT_POSTFIELDS => "grant_type=client_credentials",
+            CURLOPT_HTTPHEADER => array(
+            "Accept: application/json",
+            "Accept-Language: en_US"
+            ),
+        ));
+
+        $result= curl_exec($curl);
+        $array=json_decode($result, true);
+
+
+        $response_time = time();
+        $response_ip   = $_SERVER['REMOTE_ADDR'];
+        $sql   = "UPDATE payout_api_log SET response='$result',response_time='$response_time',response_ip='$response_ip' WHERE id=$log_id";
+        $model->query($sql);
+        $model->execute();
+
+        $access_token = !empty($array['access_token']) ? $array['access_token'] : '';
+        
+        if(!empty($access_token)) {
+
+        }
+
+
+
+
+        
+
+
+
 
     }
 
