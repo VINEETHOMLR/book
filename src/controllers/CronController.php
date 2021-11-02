@@ -27,7 +27,54 @@ class CronController extends Controller
         ini_set('memory_limit', '-1');
     }
 
+ public function actionPayout(){
 
+      $this->mdl = (new User);
+      $result = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
+
+      if($result){
+            
+            $start_time = $result['start_time'];
+            $end_time   = $result['end_time'];
+            $amount     = $result['amount'];
+            $id         = $result['id'];
+
+            // $sql = "UPDATE payout SET status=2 WHERE id='".$result['id']."' ";
+            // $this->mdl->query($sql);
+            // $this->mdl->execute();
+            
+            $count_detail = $this->mdl->callsql("SELECT count(DISTINCT(book_id)) as click_count,beneficiery_id FROM `click_log` WHERE created_at between '$start_time' AND '$end_time' group by beneficiery_id","rows");
+
+            $total_app_click = array_sum(array_column($count_detail,'click_count'));
+
+            if($amount){
+                
+                foreach ($count_detail as $key => $value) {
+                    
+                     $user_id = $value['beneficiery_id'];
+                     $click_count = $value['click_count'];
+                     $payout_amount = $click_count*$amount/$total_app_click; 
+
+                     $this->mdl->query("INSERT INTO `transaction` SET `user_id`='$user_id',`total_amount`='$amount',`entire_app_click`='$total_app_click',`total_user_click`='$click_count',`amount_transfered`='$payout_amount',`status`=1,`payout_id`='$id'");
+                     $this->mdl->execute();  
+
+                     $trans_id = $this->mdl->lastInsertId();    
+                }
+            }
+
+
+        } else {
+
+            $starttime  = date('Y-m-d 00:00:00');
+            $endtime    = date('Y-m-d 23:59:59',strtotime("+7 day", strtotime($starttime)));
+            $start_time = strtotime($starttime);
+            $end_time   = strtotime($endtime);  
+     
+            $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
+            $this->mdl->execute();
+        }
+
+ }
     
 
     public function actionVin(){
