@@ -27,7 +27,7 @@ class CronController extends Controller
         ini_set('memory_limit', '-1');
     }
 
- public function actionPayout(){
+    public function actionPayout(){
 
       $this->mdl = (new User);
       $result = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
@@ -58,7 +58,8 @@ class CronController extends Controller
                      $this->mdl->query("INSERT INTO `transaction` SET `user_id`='$user_id',`total_amount`='$amount',`entire_app_click`='$total_app_click',`total_user_click`='$click_count',`amount_transfered`='$payout_amount',`status`=1,`payout_id`='$id'");
                      $this->mdl->execute();  
 
-                     $trans_id = $this->mdl->lastInsertId();    
+                     $trans_id = $this->mdl->lastInsertId();   
+                     $this->SendPayment($trans_id,$payout_amount,$user_id); 
                 }
             }
 
@@ -74,8 +75,150 @@ class CronController extends Controller
             $this->mdl->execute();
         }
 
- }
-    
+   }
+   
+
+    public function SendPayment($trans_id,$payout_amount,$user_id){
+           
+
+        $sender_batch_id = mt_rand(100000000000000,999999999999999);
+        $sender_item_id = mt_rand(100000000000000,999999999999999);
+
+        $PAYPAL_CLIENT_ID = 'AcsrvEWcV_6BMpLI-RzgVV1DitWS68VgvT2kYxrSJUnVy7wS9iQrKL901gJ9COpQScfzYxH2AcLKWo0F';
+        $PAYPAL_SECRET = 'EIXbd2ZM9k9vVQCNWr-22QZ3tJ5yDXG5KTvu2jjNE5XfMd2w3mHvCUs7_OAKgdgJIFKO2pH7fymp2UxS';
+
+        $time = time();
+        $request = ['PAYPAL_CLIENT_ID'=>$PAYPAL_CLIENT_ID,'PAYPAL_SECRET'=>$PAYPAL_SECRET];
+        $json_rqst=json_encode($request);
+        $ip = $_SERVER['REMOTE_ADDR'];
+
+        $this->mdl->query("INSERT INTO `payout_api_log` SET `transaction_id`='$trans_id',`type`=1,`request`='$json_rqst',`request_time`='$time',`request_ip`='$ip'");
+        $this->mdl->execute();
+        $log_id = $this->mdl->lastInsertId();  
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => "https://api.sandbox.paypal.com/v1/oauth2/token",
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "POST",
+        CURLOPT_USERPWD => $PAYPAL_CLIENT_ID.":".$PAYPAL_SECRET,
+        CURLOPT_POSTFIELDS => "grant_type=client_credentials",
+        CURLOPT_HTTPHEADER => array(
+        "Accept: application/json",
+        "Accept-Language: en_US"
+        ),
+        ));
+
+        $result= curl_exec($curl);
+
+        $time_now = time();
+           
+        $this->mdl->query("UPDATE payout_api_log SET `response`='$result',`response_time`='$time_now',`response_ip`='$ip' WHERE id='".$log_id."'");
+        $this->mdl->execute();
+
+        $array=json_decode($result, true);
+         
+        if($array['access_token']){
+   
+            $access_token = $array['access_token'];
+            $email = $this->mdl->callsql("SELECT paypal_email FROM user WHERE id='$user_id'","value");
+            $time_now = time();
+           
+            $rqst = "{\"sender_batch_header\":{\"sender_batch_id\":\"$sender_batch_id\",\"email_subject\":\"You have a payout!\",\"recipient_type\":\"EMAIL\"},\"items\":[{\"recipient_type\":\"EMAIL\",\"amount\":{\"value\":\"$payout_amount\",\"currency\":\"USD\"},\"note\":\"Thanks for your patronage!\",\"sender_item_id\":\"$sender_item_id\",\"receiver\":\"$email\" }]}";
+
+           
+            $this->mdl->query("INSERT INTO `payout_api_log` SET `transaction_id`='$trans_id',`type`=2,`request`='$rqst',`request_time`='$time_now',`request_ip`='$ip'");
+            $this->mdl->execute();
+            $log_id = $this->mdl->lastInsertId(); 
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($ch, CURLOPT_URL, "https://api-m.sandbox.paypal.com/v1/payments/payouts?sync_mode=false");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS,$rqst);
+            curl_setopt($ch, CURLOPT_POST, 1);
+
+            $headers = array();
+            $headers[] = "Content-Type: application/json";
+            $headers[] = "Authorization: Bearer $access_token";
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+            $result = curl_exec($ch);
+            curl_close ($ch);
+            $time_now = time();
+           
+            $this->mdl->query("UPDATE payout_api_log SET `response`='$result',`response_time`='$time_now',`response_ip`='$ip' WHERE id='".$log_id."'");
+            $this->mdl->execute();
+
+            $array=json_decode($result, true);
+ 
+            $payout_batch_id = $array['batch_header']['payout_batch_id'];
+
+            if($payout_batch_id){
+
+            $time_now = time();
+           
+            $this->mdl->query("INSERT INTO `payout_api_log` SET `transaction_id`='$trans_id',`type`=3,`request`='$payout_batch_id',`request_time`='$time_now',`request_ip`='$ip'");
+            $this->mdl->execute();
+            $log_id = $this->mdl->lastInsertId(); 
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+                curl_setopt($ch, CURLOPT_URL, "https://api.sandbox.paypal.com/v1/payments/payouts/3DED57YS94L32");
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($ch, CURLOPT_POST, 0);
+
+                $headers = array();
+                $headers[] = "Content-Type: application/json";
+                $headers[] = "Authorization: Bearer $access_token";
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+                $result = curl_exec($ch);
+                curl_close ($ch);
+                $time_now = time();
+           
+                $this->mdl->query("UPDATE payout_api_log SET `response`='$result',`response_time`='$time_now',`response_ip`='$ip' WHERE id='".$log_id."'");
+                $this->mdl->execute();
+
+                $array=json_decode($result, true);
+                $status = $array['items'][0]['transaction_status'];
+
+                $statusArray = ['PENDING'=>'1','SUCCESS'=>'2','FAILED'=>'3','UNCLAIMED'=>'4','RETURNED'=>'5','ONHOLD'=>'6','BLOCKED'=>'7','REFUNDED'=>'8','REVERSED'=>'9'];
+
+                $status = $statusArray[$status];
+
+                $this->mdl->query("UPDATE  transaction SET `status`='$status' WHERE id='".$trans_id."'");
+                $this->mdl->execute();
+
+
+
+print_r($array['items'][0]['transaction_status']); exit;
+
+
+// SUCCESS. Funds have been credited to the recipient’s account.
+// FAILED. This payout request has failed, so funds were not deducted from the sender’s account.
+// PENDING. Your payout request was received and will be processed.
+// UNCLAIMED. The recipient for this payout does not have a PayPal account. A link to sign up for a PayPal account was sent to the recipient. However, if the recipient does not claim this payout within 30 days, the funds are returned to your account.
+// RETURNED. The recipient has not claimed this payout, so the funds have been returned to your account.
+// ONHOLD. This payout request is being reviewed and is on hold.
+// BLOCKED. This payout request has been blocked.
+// REFUNDED. This payout request was refunded.
+// REVERSED. This payout request was reversed.
+// 1-PENDING,2-SUCCESS,3-FAILED,4-UNCLAIMED,5-RETURNED,6-ONHOLD,7-BLOCKED,8-REFUNDED,9-REVERSED
+
+
+
+            }
+
+         }
+            
+ 
+    } 
 
     public function actionVin(){
 
