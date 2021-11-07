@@ -27,29 +27,24 @@ class CronController extends Controller
         ini_set('memory_limit', '-1');
     }
 
-    public function actionPayout(){
-
-      $this->mdl  = (new User);
-      $start_time = time();
-      $this->mdl->query("INSERT INTO `cron_log` SET `start_time`='$start_time'");
-      $this->mdl->execute();
-      $log_id     = $this->mdl->lastInsertId();
-
+    public function actionPayout(){  
       
-
-
-      $result     = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
-
-
-      if($result){
+       $this->mdl = (new User);
+       $time_now = time();
+     
+       $this->mdl->query("INSERT INTO `cron_log` SET `start_time`='$time_now',`status`=1");
+       $this->mdl->execute();
+       $cron_id = $this->mdl->lastInsertId(); 
+       $result = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
+  
+       if($result){
             
             $start_time = $result['start_time'];
             $end_time   = $result['end_time'];
             $amount     = $result['amount'];
             $id         = $result['id'];
 
-            // $sql = "UPDATE payout SET status=2 WHERE id='".$result['id']."' ";
-            // $this->mdl->query($sql);
+            // $this->mdl->query("UPDATE  payout SET `status`=2 WHERE id='".$result['id']."'");
             // $this->mdl->execute();
             
             $count_detail = $this->mdl->callsql("SELECT count(DISTINCT(book_id)) as click_count,beneficiery_id FROM `click_log` WHERE created_at between '$start_time' AND '$end_time' group by beneficiery_id","rows");
@@ -68,8 +63,24 @@ class CronController extends Controller
                      $this->mdl->execute();  
 
                      $trans_id = $this->mdl->lastInsertId();   
-                     $this->SendPayment($trans_id,$payout_amount,$user_id); 
-                }
+                     $this->SendPayment($trans_id,$payout_amount,$user_id);
+
+                } 
+
+                     $this->mdl->query("UPDATE  payout SET `status`=3 WHERE id='".$trans_id."'");
+                     $this->mdl->execute();
+
+                     $starttime  = date('Y-m-d 00:00:00');
+                     $endtime    = date('Y-m-d 23:59:59',strtotime("+7 day", strtotime($starttime)));
+                     $start_time = strtotime($starttime);
+                     $end_time   = strtotime($endtime);  
+             
+                     $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
+                     $this->mdl->execute();
+
+                     $time_now = time();
+                     $this->mdl->query("UPDATE  cron_log SET `start_time`='$time_now',`status`=1 WHERE id='".$cron_id."'");
+                     $this->mdl->execute();
             }
 
 
@@ -83,11 +94,6 @@ class CronController extends Controller
             $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
             $this->mdl->execute();
         }
-        
-        $end_time = time();
-        $sql = "UPDATE cron_log SET end_time='$end_time' WHERE id='$log_id' ";
-        $this->mdl->query($sql);
-        $this->mdl->execute();
 
    }
    
@@ -210,20 +216,16 @@ class CronController extends Controller
                 $this->mdl->execute();
 
 
-
-//print_r($array['items'][0]['transaction_status']); exit;
-
-
-// SUCCESS. Funds have been credited to the recipient’s account.
-// FAILED. This payout request has failed, so funds were not deducted from the sender’s account.
-// PENDING. Your payout request was received and will be processed.
-// UNCLAIMED. The recipient for this payout does not have a PayPal account. A link to sign up for a PayPal account was sent to the recipient. However, if the recipient does not claim this payout within 30 days, the funds are returned to your account.
-// RETURNED. The recipient has not claimed this payout, so the funds have been returned to your account.
-// ONHOLD. This payout request is being reviewed and is on hold.
-// BLOCKED. This payout request has been blocked.
-// REFUNDED. This payout request was refunded.
-// REVERSED. This payout request was reversed.
-// 1-PENDING,2-SUCCESS,3-FAILED,4-UNCLAIMED,5-RETURNED,6-ONHOLD,7-BLOCKED,8-REFUNDED,9-REVERSED
+                // SUCCESS. Funds have been credited to the recipient’s account.
+                // FAILED. This payout request has failed, so funds were not deducted from the sender’s account.
+                // PENDING. Your payout request was received and will be processed.
+                // UNCLAIMED. The recipient for this payout does not have a PayPal account. A link to sign up for a PayPal account was sent to the recipient. However, if the recipient does not claim this payout within 30 days, the funds are returned to your account.
+                // RETURNED. The recipient has not claimed this payout, so the funds have been returned to your account.
+                // ONHOLD. This payout request is being reviewed and is on hold.
+                // BLOCKED. This payout request has been blocked.
+                // REFUNDED. This payout request was refunded.
+                // REVERSED. This payout request was reversed.
+                // 1-PENDING,2-SUCCESS,3-FAILED,4-UNCLAIMED,5-RETURNED,6-ONHOLD,7-BLOCKED,8-REFUNDED,9-REVERSED
 
 
 
