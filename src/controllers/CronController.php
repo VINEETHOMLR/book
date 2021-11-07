@@ -78,9 +78,7 @@ class CronController extends Controller
                      $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
                      $this->mdl->execute();
 
-                     $time_now = time();
-                     $this->mdl->query("UPDATE  cron_log SET `start_time`='$time_now',`status`=1 WHERE id='".$cron_id."'");
-                     $this->mdl->execute();
+                     
             }
 
 
@@ -94,6 +92,11 @@ class CronController extends Controller
             $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
             $this->mdl->execute();
         }
+
+
+        $time_now = time();
+        $this->mdl->query("UPDATE  cron_log SET `end_time`='$time_now',`status`=1 WHERE id='".$cron_id."'");
+        $this->mdl->execute();
 
    }
    
