@@ -29,8 +29,17 @@ class CronController extends Controller
 
     public function actionPayout(){
 
-      $this->mdl = (new User);
-      $result = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
+      $this->mdl  = (new User);
+      $start_time = time();
+      $this->mdl->query("INSERT INTO `cron_log` SET `start_time`='$start_time'");
+      $this->mdl->execute();
+      $log_id     = $this->mdl->lastInsertId();
+
+      
+
+
+      $result     = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
+
 
       if($result){
             
@@ -74,6 +83,11 @@ class CronController extends Controller
             $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
             $this->mdl->execute();
         }
+        
+        $end_time = time();
+        $sql = "UPDATE cron_log SET end_time='$end_time' WHERE id='$log_id' ";
+        $this->mdl->query($sql);
+        $this->mdl->execute();
 
    }
    
@@ -197,7 +211,7 @@ class CronController extends Controller
 
 
 
-print_r($array['items'][0]['transaction_status']); exit;
+//print_r($array['items'][0]['transaction_status']); exit;
 
 
 // SUCCESS. Funds have been credited to the recipient’s account.
