@@ -36,6 +36,7 @@ class CronController extends Controller
        $this->mdl->execute();
        $cron_id = $this->mdl->lastInsertId(); 
        $result = $this->mdl->callsql("SELECT * FROM payout WHERE status=1","row");
+       $result_id = $this->mdl->lastInsertId(); 
   
        if($result){
             
@@ -65,9 +66,14 @@ class CronController extends Controller
                      $trans_id = $this->mdl->lastInsertId();   
                      $this->SendPayment($trans_id,$payout_amount,$user_id);
 
+                     $transaction_date = time();
+                     $this->mdl->query("UPDATE  transaction SET `transaction_date`='$transaction_date' WHERE id='".$trans_id."'");
+                     $this->mdl->execute();
+
+
                 } 
 
-                     $this->mdl->query("UPDATE  payout SET `status`=3 WHERE id='".$trans_id."'");
+                     $this->mdl->query("UPDATE  payout SET `status`=3 WHERE id='".$result_id."'");
                      $this->mdl->execute();
 
                      $starttime  = date('Y-m-d 00:00:00');
@@ -184,51 +190,56 @@ class CronController extends Controller
 
             if($payout_batch_id){
 
-            $time_now = time();
-           
-            $this->mdl->query("INSERT INTO `payout_api_log` SET `transaction_id`='$trans_id',`type`=3,`request`='$payout_batch_id',`request_time`='$time_now',`request_ip`='$ip'");
-            $this->mdl->execute();
-            $log_id = $this->mdl->lastInsertId(); 
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-                curl_setopt($ch, CURLOPT_URL, "https://api.sandbox.paypal.com/v1/payments/payouts/3DED57YS94L32");
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                curl_setopt($ch, CURLOPT_POST, 0);
+                $this->mdl->query("UPDATE  transaction SET `payout_batch_id`='$payout_batch_id' WHERE id='".$trans_id."'");
+                $this->mdl->execute();
 
-                $headers = array();
-                $headers[] = "Content-Type: application/json";
-                $headers[] = "Authorization: Bearer $access_token";
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-                $result = curl_exec($ch);
-                curl_close ($ch);
                 $time_now = time();
-           
-                $this->mdl->query("UPDATE payout_api_log SET `response`='$result',`response_time`='$time_now',`response_ip`='$ip' WHERE id='".$log_id."'");
+               
+                $this->mdl->query("INSERT INTO `payout_api_log` SET `transaction_id`='$trans_id',`type`=3,`request`='$payout_batch_id',`request_time`='$time_now',`request_ip`='$ip'");
                 $this->mdl->execute();
 
-                $array=json_decode($result, true);
-                $status = $array['items'][0]['transaction_status'];
+                $log_id = $this->mdl->lastInsertId(); 
 
-                $statusArray = ['PENDING'=>'1','SUCCESS'=>'2','FAILED'=>'3','UNCLAIMED'=>'4','RETURNED'=>'5','ONHOLD'=>'6','BLOCKED'=>'7','REFUNDED'=>'8','REVERSED'=>'9'];
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+                    curl_setopt($ch, CURLOPT_URL, "https://api.sandbox.paypal.com/v1/payments/payouts/$payout_batch_id");
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    curl_setopt($ch, CURLOPT_POST, 0);
 
-                $status = $statusArray[$status];
+                    $headers = array();
+                    $headers[] = "Content-Type: application/json";
+                    $headers[] = "Authorization: Bearer $access_token";
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-                $this->mdl->query("UPDATE  transaction SET `status`='$status' WHERE id='".$trans_id."'");
-                $this->mdl->execute();
+                    $result = curl_exec($ch);
+                    curl_close ($ch);
+                    $time_now = time();
+               
+                    $this->mdl->query("UPDATE payout_api_log SET `response`='$result',`response_time`='$time_now',`response_ip`='$ip' WHERE id='".$log_id."'");
+                    $this->mdl->execute();
+
+                    $array=json_decode($result, true);
+                    $status = $array['items'][0]['transaction_status'];
+
+                    $statusArray = ['PENDING'=>'1','SUCCESS'=>'2','FAILED'=>'3','UNCLAIMED'=>'4','RETURNED'=>'5','ONHOLD'=>'6','BLOCKED'=>'7','REFUNDED'=>'8','REVERSED'=>'9'];
+
+                    $status = $statusArray[$status];
+
+                    $this->mdl->query("UPDATE  transaction SET `status`='$status' WHERE id='".$trans_id."'");
+                    $this->mdl->execute();
 
 
-                // SUCCESS. Funds have been credited to the recipient’s account.
-                // FAILED. This payout request has failed, so funds were not deducted from the sender’s account.
-                // PENDING. Your payout request was received and will be processed.
-                // UNCLAIMED. The recipient for this payout does not have a PayPal account. A link to sign up for a PayPal account was sent to the recipient. However, if the recipient does not claim this payout within 30 days, the funds are returned to your account.
-                // RETURNED. The recipient has not claimed this payout, so the funds have been returned to your account.
-                // ONHOLD. This payout request is being reviewed and is on hold.
-                // BLOCKED. This payout request has been blocked.
-                // REFUNDED. This payout request was refunded.
-                // REVERSED. This payout request was reversed.
-                // 1-PENDING,2-SUCCESS,3-FAILED,4-UNCLAIMED,5-RETURNED,6-ONHOLD,7-BLOCKED,8-REFUNDED,9-REVERSED
+                    // SUCCESS. Funds have been credited to the recipient’s account.
+                    // FAILED. This payout request has failed, so funds were not deducted from the sender’s account.
+                    // PENDING. Your payout request was received and will be processed.
+                    // UNCLAIMED. The recipient for this payout does not have a PayPal account. A link to sign up for a PayPal account was sent to the recipient. However, if the recipient does not claim this payout within 30 days, the funds are returned to your account.
+                    // RETURNED. The recipient has not claimed this payout, so the funds have been returned to your account.
+                    // ONHOLD. This payout request is being reviewed and is on hold.
+                    // BLOCKED. This payout request has been blocked.
+                    // REFUNDED. This payout request was refunded.
+                    // REVERSED. This payout request was reversed.
+                    // 1-PENDING,2-SUCCESS,3-FAILED,4-UNCLAIMED,5-RETURNED,6-ONHOLD,7-BLOCKED,8-REFUNDED,9-REVERSED
 
 
 
