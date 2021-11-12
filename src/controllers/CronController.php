@@ -73,19 +73,20 @@ class CronController extends Controller
 
                 } 
 
-                     $this->mdl->query("UPDATE  payout SET `status`=3 WHERE id='".$result_id."'");
-                     $this->mdl->execute();
-
-                     $starttime  = date('Y-m-d 00:00:00');
-                     $endtime    = date('Y-m-d 23:59:59',strtotime("+7 day", strtotime($starttime)));
-                     $start_time = strtotime($starttime);
-                     $end_time   = strtotime($endtime);  
-             
-                     $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
-                     $this->mdl->execute();
+                     
 
                      
             }
+
+            $this->mdl->query("UPDATE  payout SET `status`=3 WHERE id='".$result_id."'");
+            $this->mdl->execute();
+
+            $starttime  = date('Y-m-d 00:00:00');
+            $endtime    = date('Y-m-d 23:59:59',strtotime("+7 day", strtotime($starttime)));
+            $start_time = strtotime($starttime);
+            $end_time   = strtotime($endtime);  
+            $this->mdl->query(" INSERT INTO `payout` SET `start_time`='$start_time',`end_time`='$end_time',`status`=1");
+            $this->mdl->execute(); 
 
 
         } else {
